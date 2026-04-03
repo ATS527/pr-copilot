@@ -1,0 +1,119 @@
+{
+  "name": "pr-copilot-vscode",
+  "displayName": "PR Copilot",
+  "description": "Review pull requests inside VS Code with native navigation and AI assistance.",
+  "version": "0.0.1",
+  "publisher": "startup-ideas",
+  "license": "UNLICENSED",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Other",
+    "SCM",
+    "Programming Languages"
+  ],
+  "activationEvents": [
+    "onCommand:prCopilot.openPr",
+    "onCommand:prCopilot.refreshPullRequests",
+    "onCommand:prCopilot.checkoutPr",
+    "onCommand:prCopilot.restoreBranch",
+    "onCommand:prCopilot.setGitHubToken",
+    "onCommand:prCopilot.clearGitHubToken"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "prCopilot.openPr",
+        "title": "PR Copilot: Open PR"
+      },
+      {
+        "command": "prCopilot.refreshPullRequests",
+        "title": "PR Copilot: Refresh Pull Requests"
+      },
+      {
+        "command": "prCopilot.checkoutPr",
+        "title": "PR Copilot: Checkout Pull Request"
+      },
+      {
+        "command": "prCopilot.restoreBranch",
+        "title": "PR Copilot: Restore Previous Branch"
+      },
+      {
+        "command": "prCopilot.setGitHubToken",
+        "title": "PR Copilot: Set GitHub Token"
+      },
+      {
+        "command": "prCopilot.clearGitHubToken",
+        "title": "PR Copilot: Clear GitHub Token"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "prCopilot",
+          "title": "PR Copilot",
+          "icon": "media/pr-copilot.svg"
+        }
+      ]
+    },
+    "views": {
+      "prCopilot": [
+        {
+          "id": "prCopilot.pullRequests",
+          "name": "Pull Requests"
+        },
+        {
+          "id": "prCopilot.insights",
+          "name": "AI Insights",
+          "type": "webview"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "PR Copilot",
+      "properties": {
+        "prCopilot.provider": {
+          "type": "string",
+          "enum": [
+            "github",
+            "gitlab"
+          ],
+          "default": "github",
+          "description": "Select the SCM provider for fetching pull requests."
+        },
+        "prCopilot.github.requireToken": {
+          "type": "boolean",
+          "default": false,
+          "description": "Require a GitHub personal access token before fetching pull requests."
+        },
+        "prCopilot.ai.baseUrl": {
+          "type": "string",
+          "default": "https://api.openai.com/v1",
+          "description": "Base URL for the AI provider API."
+        },
+        "prCopilot.ai.model": {
+          "type": "string",
+          "default": "gpt-4.1-mini",
+          "description": "Model identifier used for AI review features."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsc -p ./",
+    "watch": "tsc -w -p ./",
+    "lint": "eslint src --ext .ts",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.14",
+    "@types/vscode": "^1.90.0",
+    "@typescript-eslint/eslint-plugin": "^8.26.1",
+    "@typescript-eslint/parser": "^8.26.1",
+    "eslint": "^9.22.0",
+    "typescript": "^5.8.2",
+    "vsce": "^2.15.0"
+  }
+}
