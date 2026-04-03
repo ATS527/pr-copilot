@@ -1,5 +1,7 @@
 # Technical Architecture
 
+Archived note: this file may be renamed on sandbox branches to exercise PR review scenarios. The content remains the same baseline architecture document.
+
 ## Purpose
 
 This document describes the technical architecture for the MVP of PR Copilot for VS Code. The design favors a local-first extension model that minimizes backend complexity while preserving a high-quality code review experience inside the IDE.

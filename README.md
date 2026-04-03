@@ -335,3 +335,7 @@ The MVP is complete when a user can:
 ## Positioning
 
 PR Copilot for VS Code is a local-first AI-assisted code review extension that turns pull request review into a native IDE workflow. By combining branch checkout, real code navigation, and targeted AI assistance, it aims to make reviews faster, deeper, and more reliable.
+
+## Review Sandbox
+
+This repository may temporarily contain a dedicated review sandbox branch used to exercise PR Copilot against intentionally flawed but non-malicious sample changes. Those changes are for testing review flows only and should not be merged into production code.
