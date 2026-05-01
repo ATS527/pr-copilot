@@ -59,26 +59,32 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
   async function refreshOnboardingState(): Promise<void> {
     const configuration = getConfiguration();
+    const scmProvider = configuration.get<"github" | "gitlab">("provider", "github");
+    const aiEnabled = isAiInsightsEnabled(configuration);
     const aiProvider = configuration.get<AiProvider>("ai.provider", "openai");
     const aiModel = configuration.get<string>("ai.model", defaultModelForProvider(aiProvider));
     const enabledInsights = getEnabledInsightLabels(configuration);
     const [hasAiKey, hasScmToken] = await Promise.all([
-      Promise.resolve(aiProvider === "ollama" ? true : undefined).then(async (value) => {
-        if (value) {
-          return true;
-        }
-        return secretService.getAiProviderKey(aiProvider).then((stored) => Boolean(stored));
-      }),
-      getConfiguration().get<"github" | "gitlab">("provider", "github") === "gitlab"
+      !aiEnabled
+        ? Promise.resolve(false)
+        : Promise.resolve(aiProvider === "ollama" ? true : undefined).then(async (value) => {
+            if (value) {
+              return true;
+            }
+            return secretService.getAiProviderKey(aiProvider).then((stored) => Boolean(stored));
+          }),
+      scmProvider === "gitlab"
         ? secretService.getGitLabToken().then((value) => Boolean(value))
         : secretService.getGitHubToken().then((value) => Boolean(value))
     ]);
 
     insightsProvider.update(reviewSession?.pr, reviewInsights, {
+      aiEnabled,
       aiProvider,
       aiModel,
       hasAiKey,
-      hasGitHubToken: hasScmToken,
+      scmProvider,
+      hasScmToken,
       enabledInsights
     });
   }
@@ -232,13 +238,15 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         }
 
         await openFirstChangedFile(diffService, details);
-        reviewInsights = await vscode.window.withProgress(
-          {
-            location: vscode.ProgressLocation.Notification,
-            title: "PR Copilot is generating AI insights"
-          },
-          () => aiService.generateInsights(details)
-        );
+        if (isAiInsightsEnabled(getConfiguration())) {
+          reviewInsights = await vscode.window.withProgress(
+            {
+              location: vscode.ProgressLocation.Notification,
+              title: "PR Copilot is generating AI insights"
+            },
+            () => aiService.generateInsights(details)
+          );
+        }
         await refreshOnboardingState();
         await refreshWorkflowData();
       } catch (error) {
@@ -574,6 +582,68 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         showError(error);
       }
     }),
+    vscode.commands.registerCommand("prCopilot.setScmToken", async () => {
+      try {
+        const provider = getScmProvider(getConfiguration());
+        if (provider === "gitlab") {
+          const token = await secretService.ensureGitLabToken({ forcePrompt: true });
+          if (token) {
+            vscode.window.showInformationMessage("GitLab token saved securely.");
+            logger.info("GitLab token saved.");
+          }
+        } else {
+          const token = await secretService.ensureGitHubToken({ forcePrompt: true });
+          if (token) {
+            vscode.window.showInformationMessage("GitHub token saved securely.");
+            logger.info("GitHub token saved.");
+          }
+        }
+        await refreshOnboardingState();
+      } catch (error) {
+        logger.error(`Set SCM token failed: ${toErrorMessage(error)}`);
+        showError(error);
+      }
+    }),
+    vscode.commands.registerCommand("prCopilot.clearScmToken", async () => {
+      try {
+        const provider = getScmProvider(getConfiguration());
+        if (provider === "gitlab") {
+          await secretService.clearGitLabToken();
+          vscode.window.showInformationMessage("GitLab token cleared.");
+          logger.info("GitLab token cleared.");
+        } else {
+          await secretService.clearGitHubToken();
+          vscode.window.showInformationMessage("GitHub token cleared.");
+          logger.info("GitHub token cleared.");
+        }
+        await refreshOnboardingState();
+      } catch (error) {
+        logger.error(`Clear SCM token failed: ${toErrorMessage(error)}`);
+        showError(error);
+      }
+    }),
+    vscode.commands.registerCommand("prCopilot.toggleAiInsights", async () => {
+      try {
+        const configuration = getConfiguration();
+        const currentlyEnabled = isAiInsightsEnabled(configuration);
+        const nextEnabled = !currentlyEnabled;
+        await configuration.update("ai.enabled", nextEnabled, vscode.ConfigurationTarget.Global);
+
+        if (nextEnabled) {
+          logger.info("AI insights enabled.");
+          vscode.window.showInformationMessage("AI insights enabled. Choose a provider and model when you're ready.");
+        } else {
+          reviewInsights = undefined;
+          logger.info("AI insights disabled.");
+          vscode.window.showInformationMessage("AI insights disabled. PRs will open without generating AI output.");
+        }
+
+        await refreshOnboardingState();
+      } catch (error) {
+        logger.error(`Toggle AI insights failed: ${toErrorMessage(error)}`);
+        showError(error);
+      }
+    }),
     vscode.commands.registerCommand("prCopilot.selectAiProvider", async () => {
       try {
         const currentProvider = getConfiguration().get<AiProvider>("ai.provider", "openai");
@@ -607,6 +677,33 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         showError(error);
       }
     }),
+    vscode.commands.registerCommand("prCopilot.selectAiModel", async () => {
+      try {
+        const configuration = getConfiguration();
+        const provider = configuration.get<AiProvider>("ai.provider", "openai");
+        const currentModel = configuration.get<string>("ai.model", defaultModelForProvider(provider));
+        const model = await vscode.window.showInputBox({
+          title: "Set AI model",
+          prompt: `Enter the model name for ${providerLabel(provider)}.`,
+          value: currentModel,
+          ignoreFocusOut: true,
+          validateInput: (value) => (value.trim().length > 0 ? undefined : "Model name is required.")
+        });
+
+        if (!model) {
+          return;
+        }
+
+        const normalizedModel = model.trim();
+        await configuration.update("ai.model", normalizedModel, vscode.ConfigurationTarget.Global);
+        vscode.window.showInformationMessage(`AI model set to ${normalizedModel}.`);
+        logger.info(`AI model updated to ${normalizedModel}.`);
+        await refreshOnboardingState();
+      } catch (error) {
+        logger.error(`Select AI model failed: ${toErrorMessage(error)}`);
+        showError(error);
+      }
+    }),
     vscode.commands.registerCommand("prCopilot.selectInsightSections", async () => {
       try {
         const configuration = getConfiguration();
@@ -620,22 +717,16 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
               picked: currentSelections.has("summary")
             },
             {
-              label: "Risks",
-              description: "Potential bugs and review hotspots",
+              label: "Bugs and Problems",
+              description: "Potential bugs, regressions, and review hotspots",
               key: "risks" as const,
               picked: currentSelections.has("risks")
-            },
-            {
-              label: "Tests",
-              description: "Test ideas and coverage gaps",
-              key: "tests" as const,
-              picked: currentSelections.has("tests")
             }
           ],
           {
             title: "Choose AI insights to generate",
             canPickMany: true,
-            placeHolder: "Smaller local models usually feel much faster with Summary and Risks only."
+            placeHolder: "AI generation can take time. Default is Bugs and Problems only for faster reviews."
           }
         );
 
@@ -647,7 +738,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         const selectedKeys = new Set(selections.map((item) => item.key));
         await configuration.update("ai.enableSummary", selectedKeys.has("summary"), vscode.ConfigurationTarget.Global);
         await configuration.update("ai.enableRisks", selectedKeys.has("risks"), vscode.ConfigurationTarget.Global);
-        await configuration.update("ai.enableTests", selectedKeys.has("tests"), vscode.ConfigurationTarget.Global);
         logger.info(`AI insight sections updated: ${Array.from(selectedKeys).join(", ")}`);
         vscode.window.showInformationMessage(`AI insights updated: ${selections.map((item) => item.label).join(", ")}.`);
         await refreshOnboardingState();
@@ -753,16 +843,21 @@ function defaultModelForProvider(provider: AiProvider): string {
   }
 }
 
-function getEnabledInsightKeys(configuration: vscode.WorkspaceConfiguration): Array<"summary" | "risks" | "tests"> {
-  const enabled: Array<"summary" | "risks" | "tests"> = [];
-  if (configuration.get<boolean>("ai.enableSummary", true)) {
+function isAiInsightsEnabled(configuration: vscode.WorkspaceConfiguration): boolean {
+  return configuration.get<boolean>("ai.enabled", false);
+}
+
+function getScmProvider(configuration: vscode.WorkspaceConfiguration): "github" | "gitlab" {
+  return configuration.get<"github" | "gitlab">("provider", "github");
+}
+
+function getEnabledInsightKeys(configuration: vscode.WorkspaceConfiguration): Array<"summary" | "risks"> {
+  const enabled: Array<"summary" | "risks"> = [];
+  if (configuration.get<boolean>("ai.enableSummary", false)) {
     enabled.push("summary");
   }
   if (configuration.get<boolean>("ai.enableRisks", true)) {
     enabled.push("risks");
-  }
-  if (configuration.get<boolean>("ai.enableTests", true)) {
-    enabled.push("tests");
   }
   return enabled;
 }
@@ -773,9 +868,7 @@ function getEnabledInsightLabels(configuration: vscode.WorkspaceConfiguration): 
       case "summary":
         return "Summary";
       case "risks":
-        return "Risks";
-      case "tests":
-        return "Tests";
+        return "Bugs and Problems";
     }
   });
 }

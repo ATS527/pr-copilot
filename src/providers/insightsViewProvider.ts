@@ -4,10 +4,12 @@ import type { PullRequestDetails } from "../models/pr";
 import type { AiProvider } from "../services/secretService";
 
 interface OnboardingState {
+  aiEnabled: boolean;
   aiProvider: AiProvider;
   aiModel: string;
   hasAiKey: boolean;
-  hasGitHubToken: boolean;
+  scmProvider: "github" | "gitlab";
+  hasScmToken: boolean;
   enabledInsights: string[];
 }
 
@@ -18,11 +20,13 @@ export class InsightsViewProvider implements vscode.WebviewViewProvider {
   private pr?: PullRequestDetails;
   private insights?: ReviewInsights;
   private onboardingState: OnboardingState = {
+    aiEnabled: false,
     aiProvider: "openai",
     aiModel: "gpt-4.1-mini",
     hasAiKey: false,
-    hasGitHubToken: false,
-    enabledInsights: ["Summary", "Risks", "Tests"]
+    scmProvider: "github",
+    hasScmToken: false,
+    enabledInsights: ["Bugs and Problems"]
   };
 
   resolveWebviewView(view: vscode.WebviewView): void {
@@ -52,7 +56,7 @@ export class InsightsViewProvider implements vscode.WebviewViewProvider {
     const title = this.pr ? `PR #${this.pr.number}: ${this.pr.title}` : "No pull request selected";
     const summary = this.insights?.summary;
     const risks = this.insights?.risks ?? [];
-    const tests = this.insights?.tests ?? [];
+    const aiDisabled = !this.onboardingState.aiEnabled;
 
     this.view.webview.html = `<!DOCTYPE html>
 <html lang="en">
@@ -112,6 +116,11 @@ export class InsightsViewProvider implements vscode.WebviewViewProvider {
         color: var(--vscode-descriptionForeground);
         font-size: 0.92em;
       }
+      .note {
+        margin: 10px 0 0;
+        color: var(--vscode-descriptionForeground);
+        font-size: 0.92em;
+      }
       .link {
         color: var(--vscode-textLink-foreground);
         text-decoration: none;
@@ -132,31 +141,37 @@ export class InsightsViewProvider implements vscode.WebviewViewProvider {
       ${this.renderSummary(summary)}
     </section>
     <section>
-      <h3>Risks</h3>
-      ${risks.length > 0 ? `<ul>${risks
-        .map((risk) => this.renderRisk(risk))
-        .join("")}</ul>` : "<p>No risks yet.</p>"}
-    </section>
-    <section>
-      <h3>Tests</h3>
-      ${tests.length > 0 ? `<ul>${tests
-        .map((test) => this.renderTest(test))
-        .join("")}</ul>` : "<p>No test suggestions yet.</p>"}
+      <h3>Bugs and Problems</h3>
+      ${
+        aiDisabled
+          ? "<p>Turn on AI insights to generate review risks.</p>"
+          : risks.length > 0
+            ? `<ul>${risks.map((risk) => this.renderRisk(risk)).join("")}</ul>`
+            : "<p>No risks yet.</p>"
+      }
     </section>
   </body>
 </html>`;
   }
 
   private renderOnboardingCard(): string {
+    const toggleCommand = commandUri("prCopilot.toggleAiInsights");
     const aiProvider = providerLabel(this.onboardingState.aiProvider);
     const providerCommand = commandUri("prCopilot.selectAiProvider");
+    const modelCommand = commandUri("prCopilot.selectAiModel");
     const aiKeyCommand = commandUri("prCopilot.setAiToken");
-    const githubTokenCommand = commandUri("prCopilot.setGitHubToken");
+    const scmTokenCommand = commandUri("prCopilot.setScmToken");
     const openPrCommand = commandUri("prCopilot.openPr");
     const insightModesCommand = commandUri("prCopilot.selectInsightSections");
+    const aiStatus = this.onboardingState.aiEnabled ? "Enabled" : "Disabled";
+    const scmProviderLabel = this.onboardingState.scmProvider === "gitlab" ? "GitLab" : "GitHub";
 
     return `<section class="card">
       <h3>Get Started</h3>
+      <div class="status-row">
+        <span class="label">AI insights</span>
+        <span class="${this.onboardingState.aiEnabled ? "ok" : "missing"}">${aiStatus}</span>
+      </div>
       <div class="status-row">
         <span class="label">AI provider</span>
         <span>${escapeHtml(aiProvider)}</span>
@@ -173,31 +188,38 @@ export class InsightsViewProvider implements vscode.WebviewViewProvider {
       </div>
       <div class="status-row">
         <span class="label">Insight modes</span>
-        <span>${escapeHtml(this.onboardingState.enabledInsights.join(", "))}</span>
+        <span>${escapeHtml(this.onboardingState.enabledInsights.join(", ") || "None")}</span>
       </div>
       <div class="status-row">
-        <span class="label">GitHub token</span>
-        <span class="${this.onboardingState.hasGitHubToken ? "ok" : "missing"}">
-          ${this.onboardingState.hasGitHubToken ? "Configured" : "Missing"}
+        <span class="label">${escapeHtml(scmProviderLabel)} token</span>
+        <span class="${this.onboardingState.hasScmToken ? "ok" : "missing"}">
+          ${this.onboardingState.hasScmToken ? "Configured" : "Missing"}
         </span>
       </div>
       <div class="actions">
+        <a class="button" href="${toggleCommand}">${this.onboardingState.aiEnabled ? "Turn Off AI" : "Turn On AI"}</a>
         <a class="button" href="${providerCommand}">Select Provider</a>
+        <a class="button" href="${modelCommand}">Set Model</a>
         <a class="button" href="${insightModesCommand}">Choose Insights</a>
         <a class="button" href="${aiKeyCommand}">Set AI API Key</a>
         ${
-          this.onboardingState.hasGitHubToken
+          this.onboardingState.hasScmToken
             ? ""
-            : `<a class="button" href="${githubTokenCommand}">Set GitHub Token</a>`
+            : `<a class="button" href="${scmTokenCommand}">Set ${escapeHtml(scmProviderLabel)} Token</a>`
         }
         <a class="button secondary" href="${openPrCommand}">Open PR</a>
       </div>
+      <p class="note">AI generation can take time when enabled. Default mode is Bugs and Problems only.</p>
     </section>`;
   }
 
   private shouldShowOnboardingCard(): boolean {
+    if (!this.onboardingState.aiEnabled) {
+      return true;
+    }
+
     const aiReady = this.onboardingState.aiProvider === "ollama" || this.onboardingState.hasAiKey;
-    if (!aiReady || !this.onboardingState.hasGitHubToken) {
+    if (!aiReady || !this.onboardingState.hasScmToken) {
       return true;
     }
 
@@ -205,6 +227,10 @@ export class InsightsViewProvider implements vscode.WebviewViewProvider {
   }
 
   private renderSummary(summary: ReviewInsights["summary"]): string {
+    if (!this.onboardingState.aiEnabled) {
+      return "<p>AI insights are turned off. Turn them on when you want PR summaries and review guidance.</p>";
+    }
+
     if (!summary) {
       return "<p>AI summary will appear here.</p>";
     }
@@ -261,18 +287,6 @@ export class InsightsViewProvider implements vscode.WebviewViewProvider {
     return `<a class="link" href="${link}">${escapeHtml(label)}</a> <span class="meta">${escapeHtml(filePath)}</span>`;
   }
 
-  private renderTest(test: { scenario: unknown; rationale?: unknown; filePath?: string; target?: string }): string {
-    const target = test.target ? `<div class="meta">${escapeHtml(test.target)}</div>` : "";
-    const file = test.filePath ? `<div class="meta">${this.renderFileLink(test.filePath)}</div>` : "";
-    const rationale = test.rationale ? `<div>${escapeHtml(test.rationale)}</div>` : "";
-
-    return `<li>
-      <div>${escapeHtml(test.scenario)}</div>
-      ${target}
-      ${file}
-      ${rationale}
-    </li>`;
-  }
 }
 
 function escapeHtml(value: unknown): string {

@@ -1,6 +1,6 @@
 # PR Copilot for VS Code
 
-PR Copilot is a VS Code extension that brings pull request review into the IDE, combining native code navigation with AI-powered review assistance such as PR summaries, risk detection, and test suggestions.
+PR Copilot is a VS Code extension that brings pull request review into the IDE, combining native code navigation with AI-powered review assistance such as PR summaries and risk detection.
 
 ## Overview
 
@@ -14,13 +14,13 @@ Reduce PR review time and improve code quality by:
 
 - enabling PR review directly inside VS Code
 - checking out the PR branch locally for full IDE context
-- using AI to summarize changes, surface risks, and suggest tests
+- using AI to summarize changes and surface risks
 
 ## Objectives
 
 - Enable an end-to-end PR review workflow inside VS Code
 - Improve reviewer productivity and confidence
-- Reduce missed bugs, regressions, and test gaps
+- Reduce missed bugs and regressions
 
 ## Success Metrics
 
@@ -28,7 +28,7 @@ Reduce PR review time and improve code quality by:
 - Weekly active users
 - AI suggestion acceptance or usage rate
 - Qualitative improvement in review quality
-- Increased reviewer coverage of edge cases and tests
+- Increased reviewer coverage of edge cases
 
 ## Target Users
 
@@ -152,39 +152,6 @@ Acceptance criteria:
 - Findings are anchored to files or lines where possible
 - AI findings are clearly presented as suggestions, not facts
 
-### 7. Test Case Generator
-
-Generate test ideas based on the changed code.
-
-Requirements:
-
-- Analyze changed functions, classes, or logic branches
-- Suggest happy path tests
-- Suggest edge cases
-- Suggest failure scenarios
-- Allow copying suggestions for use in test files
-
-Acceptance criteria:
-
-- User can view test suggestions for the PR
-- Suggestions are specific enough to be actionable
-- User can copy test ideas directly
-
-### 8. Basic Test Gap Analyzer
-
-Highlight likely missing test coverage in the PR.
-
-Requirements:
-
-- Detect production code changes without corresponding test changes
-- Flag new functions or branches that appear untested
-- Show warnings for likely test gaps
-
-Acceptance criteria:
-
-- Extension surfaces likely missing test coverage areas
-- User can identify where test additions may be needed
-
 ## Out of Scope for MVP
 
 - CI/CD integration
@@ -238,7 +205,6 @@ Tradeoffs:
 7. AI insights load in parallel:
    - summary
    - risks
-   - test suggestions
 8. User optionally restores the previous branch after review.
 
 ## Milestones
@@ -266,8 +232,6 @@ Tradeoffs:
 
 ### Phase 4
 
-- Test suggestion generation
-- Basic test gap analysis
 - Caching and performance improvements
 
 ## Risks and Mitigations

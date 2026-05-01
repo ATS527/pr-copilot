@@ -19,9 +19,13 @@
     "onCommand:prCopilot.refreshPullRequests",
     "onCommand:prCopilot.checkoutPr",
     "onCommand:prCopilot.restoreBranch",
+    "onCommand:prCopilot.setScmToken",
+    "onCommand:prCopilot.clearScmToken",
     "onCommand:prCopilot.setGitHubToken",
     "onCommand:prCopilot.clearGitHubToken",
+    "onCommand:prCopilot.toggleAiInsights",
     "onCommand:prCopilot.selectAiProvider",
+    "onCommand:prCopilot.selectAiModel",
     "onCommand:prCopilot.selectInsightSections",
     "onCommand:prCopilot.setAiToken",
     "onCommand:prCopilot.clearAiToken",
@@ -61,6 +65,16 @@
         "title": "PR Copilot: Restore Previous Branch"
       },
       {
+        "command": "prCopilot.setScmToken",
+        "title": "PR Copilot: Set SCM Token",
+        "icon": "$(key)"
+      },
+      {
+        "command": "prCopilot.clearScmToken",
+        "title": "PR Copilot: Clear SCM Token",
+        "icon": "$(trash)"
+      },
+      {
         "command": "prCopilot.setGitHubToken",
         "title": "PR Copilot: Set GitHub Token",
         "icon": "$(key)"
@@ -71,9 +85,19 @@
         "icon": "$(trash)"
       },
       {
+        "command": "prCopilot.toggleAiInsights",
+        "title": "PR Copilot: Toggle AI Insights",
+        "icon": "$(sparkle)"
+      },
+      {
         "command": "prCopilot.selectAiProvider",
         "title": "PR Copilot: Select AI Provider",
         "icon": "$(settings-gear)"
+      },
+      {
+        "command": "prCopilot.selectAiModel",
+        "title": "PR Copilot: Set AI Model",
+        "icon": "$(symbol-field)"
       },
       {
         "command": "prCopilot.setAiToken",
@@ -168,12 +192,12 @@
           "group": "navigation@2"
         },
         {
-          "command": "prCopilot.setGitHubToken",
+          "command": "prCopilot.setScmToken",
           "when": "view == prCopilot.pullRequests",
           "group": "settings@1"
         },
         {
-          "command": "prCopilot.clearGitHubToken",
+          "command": "prCopilot.clearScmToken",
           "when": "view == prCopilot.pullRequests",
           "group": "settings@2"
         },
@@ -213,29 +237,39 @@
           "group": "navigation@1"
         },
         {
-          "command": "prCopilot.selectAiProvider",
+          "command": "prCopilot.toggleAiInsights",
           "when": "view == prCopilot.insights",
           "group": "settings@0"
         },
         {
-          "command": "prCopilot.setAiToken",
+          "command": "prCopilot.selectAiProvider",
           "when": "view == prCopilot.insights",
           "group": "settings@1"
         },
         {
-          "command": "prCopilot.selectInsightSections",
+          "command": "prCopilot.selectAiModel",
           "when": "view == prCopilot.insights",
           "group": "settings@2"
         },
         {
-          "command": "prCopilot.clearAiToken",
+          "command": "prCopilot.setAiToken",
           "when": "view == prCopilot.insights",
           "group": "settings@3"
         },
         {
-          "command": "prCopilot.showLogs",
+          "command": "prCopilot.selectInsightSections",
           "when": "view == prCopilot.insights",
           "group": "settings@4"
+        },
+        {
+          "command": "prCopilot.clearAiToken",
+          "when": "view == prCopilot.insights",
+          "group": "settings@5"
+        },
+        {
+          "command": "prCopilot.showLogs",
+          "when": "view == prCopilot.insights",
+          "group": "settings@6"
         },
         {
           "command": "prCopilot.refreshIssues",
@@ -326,6 +360,11 @@
           "default": "https://api.openai.com/v1",
           "description": "Base URL for the AI provider API."
         },
+        "prCopilot.ai.enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable AI insights for pull request bugs and problems and summaries. Generation can take time."
+        },
         "prCopilot.ai.provider": {
           "type": "string",
           "enum": [
@@ -336,7 +375,7 @@
             "ollama"
           ],
           "default": "openai",
-          "description": "AI provider used for PR summaries, risk detection, and test suggestions."
+          "description": "AI provider used for PR summaries and bug detection."
         },
         "prCopilot.ai.model": {
           "type": "string",
@@ -345,18 +384,13 @@
         },
         "prCopilot.ai.enableSummary": {
           "type": "boolean",
-          "default": true,
+          "default": false,
           "description": "Generate the AI summary section for the selected PR."
         },
         "prCopilot.ai.enableRisks": {
           "type": "boolean",
           "default": true,
-          "description": "Generate AI risk findings for the selected PR."
-        },
-        "prCopilot.ai.enableTests": {
-          "type": "boolean",
-          "default": true,
-          "description": "Generate AI-driven test suggestions for the selected PR."
+          "description": "Generate AI bugs and problems findings for the selected PR."
         },
         "prCopilot.ai.maxFilesPerInsight": {
           "type": "number",

@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import type { PullRequestDetails } from "../models/pr";
-import type { ReviewInsights, RiskInsight, SummaryInsight, TestSuggestion } from "../models/insight";
+import type { ReviewInsights, RiskInsight, SummaryInsight } from "../models/insight";
 import { chunkText } from "../utils/chunking";
 import { tryParseJson } from "../utils/parsing";
 import { type AiProvider, SecretService } from "./secretService";
@@ -43,7 +43,7 @@ export class AiService {
     const enabledSections = this.getEnabledSections();
     const chunks = this.buildDiffChunks(pr, provider);
 
-    const [summary, risks, tests] = await Promise.all([
+    const [summary, risks] = await Promise.all([
       enabledSections.summary
         ? this.requestSummary(apiKey, pr, chunks)
         : Promise.resolve<SummaryInsight>({
@@ -51,11 +51,10 @@ export class AiService {
             keyChanges: [],
             impactedAreas: []
           }),
-      enabledSections.risks ? this.requestRisks(apiKey, pr, chunks) : Promise.resolve<RiskInsight[]>([]),
-      enabledSections.tests ? this.requestTests(apiKey, pr, chunks) : Promise.resolve<TestSuggestion[]>([])
+      enabledSections.risks ? this.requestRisks(apiKey, pr, chunks) : Promise.resolve<RiskInsight[]>([])
     ]);
 
-    return { summary, risks, tests };
+    return { summary, risks };
   }
 
   private buildDiffChunks(pr: PullRequestDetails, provider: AiProvider): string[] {
@@ -87,12 +86,11 @@ export class AiService {
     return chunkText(diffText, maxChunkCharacters);
   }
 
-  private getEnabledSections(): { summary: boolean; risks: boolean; tests: boolean } {
+  private getEnabledSections(): { summary: boolean; risks: boolean } {
     const configuration = getPrCopilotConfiguration();
     return {
-      summary: configuration.get<boolean>("ai.enableSummary", true),
-      risks: configuration.get<boolean>("ai.enableRisks", true),
-      tests: configuration.get<boolean>("ai.enableTests", true)
+      summary: configuration.get<boolean>("ai.enableSummary", false),
+      risks: configuration.get<boolean>("ai.enableRisks", true)
     };
   }
 
@@ -132,26 +130,6 @@ export class AiService {
 
     const content = await this.chat(apiKey, prompt);
     return tryParseJson<RiskInsight[]>(content) ?? [];
-  }
-
-  private async requestTests(apiKey: string | undefined, pr: PullRequestDetails, chunks: string[]): Promise<TestSuggestion[]> {
-    const changedFiles = pr.files.map((file) => file.path).join("\n");
-    const prompt = [
-      "Generate test suggestions for this pull request.",
-      "Return strict JSON array with objects: scenario, rationale, filePath, target.",
-      "Only reference files, classes, methods, and controllers that appear in the changed files or PR title/body.",
-      "Do not invent hypothetical controllers, classes, endpoints, or modules.",
-      "Prioritize the highest-value regression, wiring, and behavior tests over generic repetitions.",
-      "Prefer concise, actionable test suggestions tied to changed files.",
-      "If a suggestion applies to a specific changed file, include filePath.",
-      "Changed files:",
-      changedFiles,
-      `PR title: ${pr.title}`,
-      chunks.join("\n\n")
-    ].join("\n\n");
-
-    const content = await this.chat(apiKey, prompt);
-    return tryParseJson<TestSuggestion[]>(content) ?? [];
   }
 
   private async chat(apiKey: string | undefined, prompt: string): Promise<string> {
