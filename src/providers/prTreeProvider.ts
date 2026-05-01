@@ -1,5 +1,7 @@
+import * as path from "node:path";
 import * as vscode from "vscode";
 import type { PullRequestDetails, PullRequestFile, PullRequestSummary } from "../models/pr";
+import { getWorkspaceRoot } from "../utils/workspace";
 
 type TreeNode = PullRequestSummary | PullRequestFile;
 
@@ -37,8 +39,10 @@ export class PrTreeProvider implements vscode.TreeDataProvider<TreeNode> {
       return item;
     }
 
-    const item = new vscode.TreeItem(element.path, vscode.TreeItemCollapsibleState.None);
-    item.description = `${element.additions}/-${element.deletions}`;
+    const fileName = path.basename(element.path);
+    const item = new vscode.TreeItem(fileName, vscode.TreeItemCollapsibleState.None);
+    item.resourceUri = toResourceUri(element.path);
+    item.description = `${element.path}  +${element.additions}/-${element.deletions}`;
     item.contextValue = "pullRequestFile";
     item.command = {
       command: "prCopilot.openChangedFile",
@@ -59,4 +63,13 @@ export class PrTreeProvider implements vscode.TreeDataProvider<TreeNode> {
 
     return [];
   }
+}
+
+function toResourceUri(filePath: string): vscode.Uri {
+  const workspaceRoot = getWorkspaceRoot();
+  if (workspaceRoot) {
+    return vscode.Uri.file(path.join(workspaceRoot, filePath));
+  }
+
+  return vscode.Uri.file(filePath);
 }
