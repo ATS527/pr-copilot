@@ -12,15 +12,7 @@ export interface RiskInsight {
   line?: number;
 }
 
-export interface TestSuggestion {
-  scenario: string;
-  rationale: string;
-  filePath?: string;
-  target?: string;
-}
-
 export interface ReviewInsights {
   summary?: SummaryInsight;
   risks: RiskInsight[];
-  tests: TestSuggestion[];
 }

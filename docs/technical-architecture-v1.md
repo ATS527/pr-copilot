@@ -1,5 +1,7 @@
 # Technical Architecture
 
+Archived note: this file may be renamed on sandbox branches to exercise PR review scenarios. The content remains the same baseline architecture document.
+
 ## Purpose
 
 This document describes the technical architecture for the MVP of PR Copilot for VS Code. The design favors a local-first extension model that minimizes backend complexity while preserving a high-quality code review experience inside the IDE.
@@ -165,7 +167,7 @@ The AI client service sends review context to the configured LLM provider using 
 Responsibilities:
 
 - load API key from secure storage
-- construct prompts for summary, risks, and tests
+- construct prompts for summary and risks
 - chunk large diffs
 - parse model responses into structured outputs
 - cache results by PR head SHA where appropriate
@@ -174,7 +176,6 @@ Interfaces:
 
 - `summarizePullRequest(input): Promise<SummaryInsight>`
 - `detectRisks(input): Promise<RiskInsight[]>`
-- `generateTests(input): Promise<TestSuggestion[]>`
 
 Expected file:
 
@@ -202,7 +203,7 @@ Responsibilities:
 
 - render PR list and file tree
 - display status, loading states, and errors
-- show summary, risks, and test suggestions
+- show summary and risks
 - expose actions such as copy, refresh, and restore branch
 
 Expected files:
@@ -254,13 +255,6 @@ type RiskInsight = {
   title: string;
   description: string;
 };
-
-type TestSuggestion = {
-  filePath?: string;
-  target?: string;
-  scenario: string;
-  rationale: string;
-};
 ```
 
 ## End-to-End Flows
@@ -283,7 +277,7 @@ type TestSuggestion = {
 
 1. Review session provides PR metadata, file list, and head SHA.
 2. AI service collects diff chunks and optional file context.
-3. Requests are sent for summary, risks, and test suggestions.
+3. Requests are sent for summary and risks.
 4. Responses are parsed into typed insight objects.
 5. Insights panel updates progressively as results arrive.
 
@@ -316,10 +310,9 @@ sequenceDiagram
     C->>G: checkoutPullRequest(pr)
     G-->>C: checkout result
     C-->>U: Open review session
-    C->>A: summarize / detectRisks / generateTests
+    C->>A: summarize / detectRisks
     A-->>UI: summary
     A-->>UI: risks
-    A-->>UI: tests
 ```
 
 ## VS Code API Usage
@@ -371,7 +364,6 @@ Request structured outputs that can be mapped into UI:
 
 - summary object
 - list of risks with optional file or line anchors
-- list of test suggestions
 
 ### Guardrails
 
@@ -514,7 +506,6 @@ src/
 
 ### Milestone 4
 
-- test suggestions
 - test gap heuristics
 - caching and performance polish
 

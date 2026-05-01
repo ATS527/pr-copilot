@@ -4,6 +4,7 @@
   "description": "Review pull requests inside VS Code with native navigation and AI assistance.",
   "version": "0.0.1",
   "publisher": "startup-ideas",
+  "icon": "media/pr-copilot.svg",
   "license": "UNLICENSED",
   "engines": {
     "vscode": "^1.90.0"
@@ -18,19 +19,42 @@
     "onCommand:prCopilot.refreshPullRequests",
     "onCommand:prCopilot.checkoutPr",
     "onCommand:prCopilot.restoreBranch",
+    "onCommand:prCopilot.setScmToken",
+    "onCommand:prCopilot.clearScmToken",
     "onCommand:prCopilot.setGitHubToken",
-    "onCommand:prCopilot.clearGitHubToken"
+    "onCommand:prCopilot.clearGitHubToken",
+    "onCommand:prCopilot.toggleAiInsights",
+    "onCommand:prCopilot.selectAiProvider",
+    "onCommand:prCopilot.selectAiModel",
+    "onCommand:prCopilot.selectInsightSections",
+    "onCommand:prCopilot.setAiToken",
+    "onCommand:prCopilot.clearAiToken",
+    "onCommand:prCopilot.createPullRequest",
+    "onCommand:prCopilot.mergePullRequest",
+    "onCommand:prCopilot.closePullRequest",
+    "onCommand:prCopilot.editPullRequestMetadata",
+    "onCommand:prCopilot.addReviewComment",
+    "onCommand:prCopilot.submitReview",
+    "onCommand:prCopilot.openReviewDraft",
+    "onCommand:prCopilot.removeReviewComment",
+    "onCommand:prCopilot.clearReviewComments",
+    "onCommand:prCopilot.refreshIssues",
+    "onCommand:prCopilot.refreshChecks",
+    "onCommand:prCopilot.refreshSecurity",
+    "onCommand:prCopilot.showLogs"
   ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
         "command": "prCopilot.openPr",
-        "title": "PR Copilot: Open PR"
+        "title": "PR Copilot: Open PR",
+        "icon": "$(repo-pull)"
       },
       {
         "command": "prCopilot.refreshPullRequests",
-        "title": "PR Copilot: Refresh Pull Requests"
+        "title": "PR Copilot: Refresh Pull Requests",
+        "icon": "$(refresh)"
       },
       {
         "command": "prCopilot.checkoutPr",
@@ -41,14 +65,236 @@
         "title": "PR Copilot: Restore Previous Branch"
       },
       {
+        "command": "prCopilot.setScmToken",
+        "title": "PR Copilot: Set SCM Token",
+        "icon": "$(key)"
+      },
+      {
+        "command": "prCopilot.clearScmToken",
+        "title": "PR Copilot: Clear SCM Token",
+        "icon": "$(trash)"
+      },
+      {
         "command": "prCopilot.setGitHubToken",
-        "title": "PR Copilot: Set GitHub Token"
+        "title": "PR Copilot: Set GitHub Token",
+        "icon": "$(key)"
       },
       {
         "command": "prCopilot.clearGitHubToken",
-        "title": "PR Copilot: Clear GitHub Token"
+        "title": "PR Copilot: Clear GitHub Token",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "prCopilot.toggleAiInsights",
+        "title": "PR Copilot: Toggle AI Insights",
+        "icon": "$(sparkle)"
+      },
+      {
+        "command": "prCopilot.selectAiProvider",
+        "title": "PR Copilot: Select AI Provider",
+        "icon": "$(settings-gear)"
+      },
+      {
+        "command": "prCopilot.selectAiModel",
+        "title": "PR Copilot: Set AI Model",
+        "icon": "$(symbol-field)"
+      },
+      {
+        "command": "prCopilot.setAiToken",
+        "title": "PR Copilot: Set AI API Key",
+        "icon": "$(lock)"
+      },
+      {
+        "command": "prCopilot.selectInsightSections",
+        "title": "PR Copilot: Choose AI Insights",
+        "icon": "$(filter)"
+      },
+      {
+        "command": "prCopilot.clearAiToken",
+        "title": "PR Copilot: Clear AI API Key",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "prCopilot.createPullRequest",
+        "title": "PR Copilot: Create Pull Request",
+        "icon": "$(git-pull-request-create)"
+      },
+      {
+        "command": "prCopilot.mergePullRequest",
+        "title": "PR Copilot: Merge Pull Request",
+        "icon": "$(git-merge)"
+      },
+      {
+        "command": "prCopilot.closePullRequest",
+        "title": "PR Copilot: Close Pull Request",
+        "icon": "$(close)"
+      },
+      {
+        "command": "prCopilot.editPullRequestMetadata",
+        "title": "PR Copilot: Edit Pull Request Metadata",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "prCopilot.addReviewComment",
+        "title": "PR Copilot: Add Review Comment",
+        "icon": "$(comment)"
+      },
+      {
+        "command": "prCopilot.submitReview",
+        "title": "PR Copilot: Submit Review",
+        "icon": "$(checklist)"
+      },
+      {
+        "command": "prCopilot.openReviewDraft",
+        "title": "PR Copilot: Open Review Draft"
+      },
+      {
+        "command": "prCopilot.removeReviewComment",
+        "title": "PR Copilot: Remove Review Comment",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "prCopilot.clearReviewComments",
+        "title": "PR Copilot: Clear Review Comments",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "prCopilot.refreshIssues",
+        "title": "PR Copilot: Refresh Issues",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "prCopilot.refreshChecks",
+        "title": "PR Copilot: Refresh Checks",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "prCopilot.refreshSecurity",
+        "title": "PR Copilot: Refresh Security Findings",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "prCopilot.showLogs",
+        "title": "PR Copilot: Show Logs",
+        "icon": "$(output)"
       }
     ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "prCopilot.openPr",
+          "when": "view == prCopilot.pullRequests",
+          "group": "navigation@1"
+        },
+        {
+          "command": "prCopilot.refreshPullRequests",
+          "when": "view == prCopilot.pullRequests",
+          "group": "navigation@2"
+        },
+        {
+          "command": "prCopilot.setScmToken",
+          "when": "view == prCopilot.pullRequests",
+          "group": "settings@1"
+        },
+        {
+          "command": "prCopilot.clearScmToken",
+          "when": "view == prCopilot.pullRequests",
+          "group": "settings@2"
+        },
+        {
+          "command": "prCopilot.createPullRequest",
+          "when": "view == prCopilot.pullRequests",
+          "group": "actions@3"
+        },
+        {
+          "command": "prCopilot.mergePullRequest",
+          "when": "view == prCopilot.pullRequests",
+          "group": "actions@4"
+        },
+        {
+          "command": "prCopilot.closePullRequest",
+          "when": "view == prCopilot.pullRequests",
+          "group": "actions@5"
+        },
+        {
+          "command": "prCopilot.editPullRequestMetadata",
+          "when": "view == prCopilot.pullRequests",
+          "group": "actions@6"
+        },
+        {
+          "command": "prCopilot.addReviewComment",
+          "when": "view == prCopilot.pullRequests",
+          "group": "actions@7"
+        },
+        {
+          "command": "prCopilot.submitReview",
+          "when": "view == prCopilot.pullRequests",
+          "group": "actions@8"
+        },
+        {
+          "command": "prCopilot.clearReviewComments",
+          "when": "view == prCopilot.reviewDrafts",
+          "group": "navigation@1"
+        },
+        {
+          "command": "prCopilot.toggleAiInsights",
+          "when": "view == prCopilot.insights",
+          "group": "settings@0"
+        },
+        {
+          "command": "prCopilot.selectAiProvider",
+          "when": "view == prCopilot.insights",
+          "group": "settings@1"
+        },
+        {
+          "command": "prCopilot.selectAiModel",
+          "when": "view == prCopilot.insights",
+          "group": "settings@2"
+        },
+        {
+          "command": "prCopilot.setAiToken",
+          "when": "view == prCopilot.insights",
+          "group": "settings@3"
+        },
+        {
+          "command": "prCopilot.selectInsightSections",
+          "when": "view == prCopilot.insights",
+          "group": "settings@4"
+        },
+        {
+          "command": "prCopilot.clearAiToken",
+          "when": "view == prCopilot.insights",
+          "group": "settings@5"
+        },
+        {
+          "command": "prCopilot.showLogs",
+          "when": "view == prCopilot.insights",
+          "group": "settings@6"
+        },
+        {
+          "command": "prCopilot.refreshIssues",
+          "when": "view == prCopilot.issues",
+          "group": "navigation@1"
+        },
+        {
+          "command": "prCopilot.refreshChecks",
+          "when": "view == prCopilot.checks",
+          "group": "navigation@1"
+        },
+        {
+          "command": "prCopilot.refreshSecurity",
+          "when": "view == prCopilot.security",
+          "group": "navigation@1"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "prCopilot.removeReviewComment",
+          "when": "view == prCopilot.reviewDrafts && viewItem == reviewDraft",
+          "group": "inline"
+        }
+      ]
+    },
     "viewsContainers": {
       "activitybar": [
         {
@@ -68,6 +314,22 @@
           "id": "prCopilot.insights",
           "name": "AI Insights",
           "type": "webview"
+        },
+        {
+          "id": "prCopilot.issues",
+          "name": "Issues"
+        },
+        {
+          "id": "prCopilot.checks",
+          "name": "Checks"
+        },
+        {
+          "id": "prCopilot.security",
+          "name": "Security"
+        },
+        {
+          "id": "prCopilot.reviewDrafts",
+          "name": "Review Drafts"
         }
       ]
     },
@@ -88,15 +350,80 @@
           "default": false,
           "description": "Require a GitHub personal access token before fetching pull requests."
         },
+        "prCopilot.github.pullRequestQuery": {
+          "type": "string",
+          "default": "",
+          "description": "Optional additional GitHub search qualifiers for filtering pull requests."
+        },
         "prCopilot.ai.baseUrl": {
           "type": "string",
           "default": "https://api.openai.com/v1",
           "description": "Base URL for the AI provider API."
         },
+        "prCopilot.ai.enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable AI insights for pull request bugs and problems and summaries. Generation can take time."
+        },
+        "prCopilot.ai.provider": {
+          "type": "string",
+          "enum": [
+            "openai",
+            "openai-compatible",
+            "gemini",
+            "anthropic",
+            "ollama"
+          ],
+          "default": "openai",
+          "description": "AI provider used for PR summaries and bug detection."
+        },
         "prCopilot.ai.model": {
           "type": "string",
           "default": "gpt-4.1-mini",
           "description": "Model identifier used for AI review features."
+        },
+        "prCopilot.ai.enableSummary": {
+          "type": "boolean",
+          "default": false,
+          "description": "Generate the AI summary section for the selected PR."
+        },
+        "prCopilot.ai.enableRisks": {
+          "type": "boolean",
+          "default": true,
+          "description": "Generate AI bugs and problems findings for the selected PR."
+        },
+        "prCopilot.ai.maxFilesPerInsight": {
+          "type": "number",
+          "default": 20,
+          "minimum": 1,
+          "description": "Maximum number of changed files included in AI insight prompts."
+        },
+        "prCopilot.ai.maxDiffCharacters": {
+          "type": "number",
+          "default": 48000,
+          "minimum": 2000,
+          "description": "Maximum total diff characters included across all AI insight prompts."
+        },
+        "prCopilot.ai.maxChunkCharacters": {
+          "type": "number",
+          "default": 12000,
+          "minimum": 2000,
+          "description": "Maximum prompt chunk size used when splitting PR diffs for AI insight generation."
+        },
+        "prCopilot.ai.anthropicVersion": {
+          "type": "string",
+          "default": "2023-06-01",
+          "description": "Anthropic API version header used when the Anthropic provider is selected."
+        },
+        "prCopilot.ai.geminiBaseUrl": {
+          "type": "string",
+          "default": "https://generativelanguage.googleapis.com/v1beta",
+          "description": "Base URL for Gemini API requests."
+        },
+        "prCopilot.ai.ollamaBaseUrl": {
+          "type": "string",
+          "default": "http://localhost:11434/v1",
+          "description": "Base URL for local Ollama OpenAI-compatible API requests."
         }
       }
     }
