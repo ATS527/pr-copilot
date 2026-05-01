@@ -4,7 +4,7 @@
   "description": "Review pull requests inside VS Code with native navigation and AI assistance.",
   "version": "0.0.1",
   "publisher": "startup-ideas",
-  "icon": "media/pr-copilot.svg",
+  "icon": "media/pr-copilot.png",
   "license": "UNLICENSED",
   "engines": {
     "vscode": "^1.90.0"
