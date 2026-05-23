@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 
 export class LoggerService {
-  private readonly outputChannel = vscode.window.createOutputChannel("PR Copilot");
+  private readonly outputChannel = vscode.window.createOutputChannel("Pull Request Review");
 
   info(message: string): void {
     this.outputChannel.appendLine(`[INFO] ${message}`);

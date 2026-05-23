@@ -2,8 +2,10 @@ import type { PullRequestDetails, PullRequestSummary } from "../models/pr";
 import type { PipelineCheck, PullRequestIssue, PullRequestReviewCommentDraft, SecurityFinding } from "../models/workflow";
 
 export interface GitHubRepositoryRef {
+  host: string;
   owner: string;
   repo: string;
+  apiBaseUrl: string;
 }
 
 export class GitHubAuthenticationError extends Error {
@@ -89,12 +91,11 @@ interface GitHubPullRequestFile {
 }
 
 export class GitHubService {
-  constructor(private readonly baseUrl = "https://api.github.com") {}
-
-  async listPullRequests(owner: string, repo: string, token?: string, query?: string): Promise<PullRequestSummary[]> {
+  async listPullRequests(repository: GitHubRepositoryRef, token?: string, query?: string): Promise<PullRequestSummary[]> {
     if (query?.trim()) {
       const response = await this.request<GitHubSearchPullRequestsResponse>(
-        `/search/issues?q=${encodeURIComponent(`repo:${owner}/${repo} is:pr is:open ${query}`)}`,
+        repository,
+        `/search/issues?q=${encodeURIComponent(`repo:${repository.owner}/${repository.repo} is:pr is:open ${query}`)}`,
         token
       );
       return response.items.map((pr) => ({
@@ -109,7 +110,7 @@ export class GitHubService {
       }));
     }
 
-    const prs = await this.request<GitHubPullRequest[]>(`/repos/${owner}/${repo}/pulls`, token);
+    const prs = await this.request<GitHubPullRequest[]>(repository, `/repos/${repository.owner}/${repository.repo}/pulls`, token);
     return prs.map((pr) => ({
       id: String(pr.number),
       number: pr.number,
@@ -122,8 +123,8 @@ export class GitHubService {
     }));
   }
 
-  async listIssues(owner: string, repo: string, token?: string): Promise<PullRequestIssue[]> {
-    const issues = await this.request<GitHubIssue[]>(`/repos/${owner}/${repo}/issues`, token);
+  async listIssues(repository: GitHubRepositoryRef, token?: string): Promise<PullRequestIssue[]> {
+    const issues = await this.request<GitHubIssue[]>(repository, `/repos/${repository.owner}/${repository.repo}/issues`, token);
     return issues
       .filter((issue) => !issue.pull_request)
       .map((issue) => ({
@@ -137,9 +138,10 @@ export class GitHubService {
       }));
   }
 
-  async listCheckRuns(owner: string, repo: string, ref: string, token?: string): Promise<PipelineCheck[]> {
+  async listCheckRuns(repository: GitHubRepositoryRef, ref: string, token?: string): Promise<PipelineCheck[]> {
     const response = await this.request<GitHubCheckRunsResponse>(
-      `/repos/${owner}/${repo}/commits/${encodeURIComponent(ref)}/check-runs`,
+      repository,
+      `/repos/${repository.owner}/${repository.repo}/commits/${encodeURIComponent(ref)}/check-runs`,
       token,
       { Accept: "application/vnd.github+json" }
     );
@@ -152,9 +154,10 @@ export class GitHubService {
     }));
   }
 
-  async listSecurityFindings(owner: string, repo: string, prNumber: number, token?: string): Promise<SecurityFinding[]> {
+  async listSecurityFindings(repository: GitHubRepositoryRef, prNumber: number, token?: string): Promise<SecurityFinding[]> {
     const alerts = await this.request<GitHubCodeScanningAlert[]>(
-      `/repos/${owner}/${repo}/code-scanning/alerts?pr=${prNumber}`,
+      repository,
+      `/repos/${repository.owner}/${repository.repo}/code-scanning/alerts?pr=${prNumber}`,
       token
     );
     return alerts.map((alert) => ({
@@ -169,10 +172,14 @@ export class GitHubService {
     }));
   }
 
-  async getPullRequest(owner: string, repo: string, number: number, token?: string): Promise<PullRequestDetails> {
+  async getPullRequest(repository: GitHubRepositoryRef, number: number, token?: string): Promise<PullRequestDetails> {
     const [pr, files] = await Promise.all([
-      this.request<GitHubPullRequest>(`/repos/${owner}/${repo}/pulls/${number}`, token),
-      this.request<GitHubPullRequestFile[]>(`/repos/${owner}/${repo}/pulls/${number}/files`, token)
+      this.request<GitHubPullRequest>(repository, `/repos/${repository.owner}/${repository.repo}/pulls/${number}`, token),
+      this.request<GitHubPullRequestFile[]>(
+        repository,
+        `/repos/${repository.owner}/${repository.repo}/pulls/${number}/files`,
+        token
+      )
     ]);
 
     return {
@@ -216,25 +223,24 @@ export class GitHubService {
     };
   }
 
-  async mergePullRequest(owner: string, repo: string, number: number, token?: string): Promise<void> {
-    await this.request<void>(`/repos/${owner}/${repo}/pulls/${number}/merge`, token, {}, "PUT", {
+  async mergePullRequest(repository: GitHubRepositoryRef, number: number, token?: string): Promise<void> {
+    await this.request<void>(repository, `/repos/${repository.owner}/${repository.repo}/pulls/${number}/merge`, token, {}, "PUT", {
       merge_method: "merge"
     });
   }
 
-  async closePullRequest(owner: string, repo: string, number: number, token?: string): Promise<void> {
-    await this.request<void>(`/repos/${owner}/${repo}/pulls/${number}`, token, {}, "PATCH", {
+  async closePullRequest(repository: GitHubRepositoryRef, number: number, token?: string): Promise<void> {
+    await this.request<void>(repository, `/repos/${repository.owner}/${repository.repo}/pulls/${number}`, token, {}, "PATCH", {
       state: "closed"
     });
   }
 
   async createPullRequest(
-    owner: string,
-    repo: string,
+    repository: GitHubRepositoryRef,
     input: { title: string; body?: string; head: string; base: string; draft?: boolean },
     token?: string
   ): Promise<PullRequestSummary> {
-    const pr = await this.request<GitHubPullRequest>(`/repos/${owner}/${repo}/pulls`, token, {}, "POST", input);
+    const pr = await this.request<GitHubPullRequest>(repository, `/repos/${repository.owner}/${repository.repo}/pulls`, token, {}, "POST", input);
     return {
       id: String(pr.number),
       number: pr.number,
@@ -248,8 +254,7 @@ export class GitHubService {
   }
 
   async updatePullRequestMetadata(
-    owner: string,
-    repo: string,
+    repository: GitHubRepositoryRef,
     number: number,
     input: {
       labels?: string[];
@@ -260,7 +265,7 @@ export class GitHubService {
     token?: string
   ): Promise<void> {
     if (input.labels || input.assignees || typeof input.milestone !== "undefined") {
-      await this.request<void>(`/repos/${owner}/${repo}/issues/${number}`, token, {}, "PATCH", {
+      await this.request<void>(repository, `/repos/${repository.owner}/${repository.repo}/issues/${number}`, token, {}, "PATCH", {
         ...(input.labels ? { labels: input.labels } : {}),
         ...(input.assignees ? { assignees: input.assignees } : {}),
         ...(typeof input.milestone !== "undefined" ? { milestone: input.milestone } : {})
@@ -268,22 +273,21 @@ export class GitHubService {
     }
 
     if (input.reviewers) {
-      await this.request<void>(`/repos/${owner}/${repo}/pulls/${number}/requested_reviewers`, token, {}, "POST", {
+      await this.request<void>(repository, `/repos/${repository.owner}/${repository.repo}/pulls/${number}/requested_reviewers`, token, {}, "POST", {
         reviewers: input.reviewers
       });
     }
   }
 
   async submitReview(
-    owner: string,
-    repo: string,
+    repository: GitHubRepositoryRef,
     number: number,
     event: "COMMENT" | "APPROVE" | "REQUEST_CHANGES",
     body: string,
     comments: PullRequestReviewCommentDraft[],
     token?: string
   ): Promise<void> {
-    await this.request<void>(`/repos/${owner}/${repo}/pulls/${number}/reviews`, token, {}, "POST", {
+    await this.request<void>(repository, `/repos/${repository.owner}/${repository.repo}/pulls/${number}/reviews`, token, {}, "POST", {
       event,
       body,
       comments: comments.map((comment) => ({
@@ -296,17 +300,18 @@ export class GitHubService {
   }
 
   private async request<T>(
+    repository: GitHubRepositoryRef,
     pathname: string,
     token?: string,
     extraHeaders: Record<string, string> = {},
     method = "GET",
     body?: unknown
   ): Promise<T> {
-    const response = await fetch(`${this.baseUrl}${pathname}`, {
+    const response = await fetch(`${repository.apiBaseUrl}${pathname}`, {
       method,
       headers: {
         Accept: "application/vnd.github+json",
-        "User-Agent": "pr-copilot-vscode",
+        "User-Agent": "pull-request-review-vscode",
         ...(body ? { "Content-Type": "application/json" } : {}),
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...extraHeaders
@@ -330,14 +335,57 @@ export class GitHubService {
 
   static parseRepository(remoteUrl: string): GitHubRepositoryRef | undefined {
     const normalized = remoteUrl.trim().replace(/\.git$/, "");
-    const match = normalized.match(/github\.com[:/](?<owner>[^/]+)\/(?<repo>[^/]+)$/);
-    if (!match?.groups) {
+    const parsed = parseRemoteUrl(normalized);
+    if (!parsed) {
+      return undefined;
+    }
+
+    const [owner, repo, ...rest] = parsed.pathSegments;
+    if (!owner || !repo || rest.length > 0) {
       return undefined;
     }
 
     return {
-      owner: match.groups.owner,
-      repo: match.groups.repo
+      host: parsed.host,
+      owner,
+      repo,
+      apiBaseUrl: getGitHubApiBaseUrl(parsed.host)
     };
   }
+}
+
+function parseRemoteUrl(remoteUrl: string): { host: string; pathSegments: string[] } | undefined {
+  const sshLikeMatch = remoteUrl.match(/^git@(?<host>[^:]+):(?<path>.+)$/);
+  if (sshLikeMatch?.groups) {
+    return {
+      host: sshLikeMatch.groups.host,
+      pathSegments: splitRepoPath(sshLikeMatch.groups.path)
+    };
+  }
+
+    try {
+      const parsed = new URL(remoteUrl);
+      return {
+        host: parsed.host,
+        pathSegments: splitRepoPath(parsed.pathname)
+      };
+  } catch {
+    return undefined;
+  }
+}
+
+function splitRepoPath(pathname: string): string[] {
+  return pathname
+    .replace(/^\/+/, "")
+    .replace(/\/+$/, "")
+    .split("/")
+    .filter(Boolean);
+}
+
+function getGitHubApiBaseUrl(host: string): string {
+  if (host.toLowerCase() === "github.com") {
+    return "https://api.github.com";
+  }
+
+  return `https://${host}/api/v3`;
 }

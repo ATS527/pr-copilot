@@ -1,11 +1,15 @@
 {
-  "name": "pr-copilot-vscode",
-  "displayName": "PR Copilot",
-  "description": "Review pull requests inside VS Code with native navigation and AI assistance.",
+  "name": "pull-request-review-vscode",
+  "displayName": "Pull Request Review",
+  "description": "Review pull requests inside VS Code with native navigation.",
   "version": "0.0.1",
   "publisher": "startup-ideas",
   "icon": "media/pr-copilot.png",
-  "license": "UNLICENSED",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ATS527/pr-copilot"
+  },
   "engines": {
     "vscode": "^1.90.0"
   },
@@ -23,12 +27,6 @@
     "onCommand:prCopilot.clearScmToken",
     "onCommand:prCopilot.setGitHubToken",
     "onCommand:prCopilot.clearGitHubToken",
-    "onCommand:prCopilot.toggleAiInsights",
-    "onCommand:prCopilot.selectAiProvider",
-    "onCommand:prCopilot.selectAiModel",
-    "onCommand:prCopilot.selectInsightSections",
-    "onCommand:prCopilot.setAiToken",
-    "onCommand:prCopilot.clearAiToken",
     "onCommand:prCopilot.createPullRequest",
     "onCommand:prCopilot.mergePullRequest",
     "onCommand:prCopilot.closePullRequest",
@@ -48,134 +46,104 @@
     "commands": [
       {
         "command": "prCopilot.openPr",
-        "title": "PR Copilot: Open PR",
+        "title": "Pull Request Review: Open PR",
         "icon": "$(repo-pull)"
       },
       {
         "command": "prCopilot.refreshPullRequests",
-        "title": "PR Copilot: Refresh Pull Requests",
+        "title": "Pull Request Review: Refresh Pull Requests",
         "icon": "$(refresh)"
       },
       {
         "command": "prCopilot.checkoutPr",
-        "title": "PR Copilot: Checkout Pull Request"
+        "title": "Pull Request Review: Checkout Pull Request"
       },
       {
         "command": "prCopilot.restoreBranch",
-        "title": "PR Copilot: Restore Previous Branch"
+        "title": "Pull Request Review: Restore Previous Branch"
       },
       {
         "command": "prCopilot.setScmToken",
-        "title": "PR Copilot: Set SCM Token",
+        "title": "Pull Request Review: Set SCM Token",
         "icon": "$(key)"
       },
       {
         "command": "prCopilot.clearScmToken",
-        "title": "PR Copilot: Clear SCM Token",
+        "title": "Pull Request Review: Clear SCM Token",
         "icon": "$(trash)"
       },
       {
         "command": "prCopilot.setGitHubToken",
-        "title": "PR Copilot: Set GitHub Token",
+        "title": "Pull Request Review: Set GitHub Token",
         "icon": "$(key)"
       },
       {
         "command": "prCopilot.clearGitHubToken",
-        "title": "PR Copilot: Clear GitHub Token",
-        "icon": "$(trash)"
-      },
-      {
-        "command": "prCopilot.toggleAiInsights",
-        "title": "PR Copilot: Toggle AI Insights",
-        "icon": "$(sparkle)"
-      },
-      {
-        "command": "prCopilot.selectAiProvider",
-        "title": "PR Copilot: Select AI Provider",
-        "icon": "$(settings-gear)"
-      },
-      {
-        "command": "prCopilot.selectAiModel",
-        "title": "PR Copilot: Set AI Model",
-        "icon": "$(symbol-field)"
-      },
-      {
-        "command": "prCopilot.setAiToken",
-        "title": "PR Copilot: Set AI API Key",
-        "icon": "$(lock)"
-      },
-      {
-        "command": "prCopilot.selectInsightSections",
-        "title": "PR Copilot: Choose AI Insights",
-        "icon": "$(filter)"
-      },
-      {
-        "command": "prCopilot.clearAiToken",
-        "title": "PR Copilot: Clear AI API Key",
+        "title": "Pull Request Review: Clear GitHub Token",
         "icon": "$(trash)"
       },
       {
         "command": "prCopilot.createPullRequest",
-        "title": "PR Copilot: Create Pull Request",
+        "title": "Pull Request Review: Create Pull Request",
         "icon": "$(git-pull-request-create)"
       },
       {
         "command": "prCopilot.mergePullRequest",
-        "title": "PR Copilot: Merge Pull Request",
+        "title": "Pull Request Review: Merge Pull Request",
         "icon": "$(git-merge)"
       },
       {
         "command": "prCopilot.closePullRequest",
-        "title": "PR Copilot: Close Pull Request",
+        "title": "Pull Request Review: Close Pull Request",
         "icon": "$(close)"
       },
       {
         "command": "prCopilot.editPullRequestMetadata",
-        "title": "PR Copilot: Edit Pull Request Metadata",
+        "title": "Pull Request Review: Edit Pull Request Metadata",
         "icon": "$(edit)"
       },
       {
         "command": "prCopilot.addReviewComment",
-        "title": "PR Copilot: Add Review Comment",
+        "title": "Pull Request Review: Add Review Comment",
         "icon": "$(comment)"
       },
       {
         "command": "prCopilot.submitReview",
-        "title": "PR Copilot: Submit Review",
+        "title": "Pull Request Review: Submit Review",
         "icon": "$(checklist)"
       },
       {
         "command": "prCopilot.openReviewDraft",
-        "title": "PR Copilot: Open Review Draft"
+        "title": "Pull Request Review: Open Review Draft"
       },
       {
         "command": "prCopilot.removeReviewComment",
-        "title": "PR Copilot: Remove Review Comment",
+        "title": "Pull Request Review: Remove Review Comment",
         "icon": "$(trash)"
       },
       {
         "command": "prCopilot.clearReviewComments",
-        "title": "PR Copilot: Clear Review Comments",
+        "title": "Pull Request Review: Clear Review Comments",
         "icon": "$(clear-all)"
       },
       {
         "command": "prCopilot.refreshIssues",
-        "title": "PR Copilot: Refresh Issues",
+        "title": "Pull Request Review: Refresh Issues",
         "icon": "$(refresh)"
       },
       {
         "command": "prCopilot.refreshChecks",
-        "title": "PR Copilot: Refresh Checks",
+        "title": "Pull Request Review: Refresh Checks",
         "icon": "$(refresh)"
       },
       {
         "command": "prCopilot.refreshSecurity",
-        "title": "PR Copilot: Refresh Security Findings",
+        "title": "Pull Request Review: Refresh Security Findings",
         "icon": "$(refresh)"
       },
       {
         "command": "prCopilot.showLogs",
-        "title": "PR Copilot: Show Logs",
+        "title": "Pull Request Review: Show Logs",
         "icon": "$(output)"
       }
     ],
@@ -237,39 +205,9 @@
           "group": "navigation@1"
         },
         {
-          "command": "prCopilot.toggleAiInsights",
-          "when": "view == prCopilot.insights",
-          "group": "settings@0"
-        },
-        {
-          "command": "prCopilot.selectAiProvider",
-          "when": "view == prCopilot.insights",
-          "group": "settings@1"
-        },
-        {
-          "command": "prCopilot.selectAiModel",
-          "when": "view == prCopilot.insights",
-          "group": "settings@2"
-        },
-        {
-          "command": "prCopilot.setAiToken",
-          "when": "view == prCopilot.insights",
-          "group": "settings@3"
-        },
-        {
-          "command": "prCopilot.selectInsightSections",
-          "when": "view == prCopilot.insights",
-          "group": "settings@4"
-        },
-        {
-          "command": "prCopilot.clearAiToken",
-          "when": "view == prCopilot.insights",
-          "group": "settings@5"
-        },
-        {
           "command": "prCopilot.showLogs",
-          "when": "view == prCopilot.insights",
-          "group": "settings@6"
+          "when": "view == prCopilot.pullRequests",
+          "group": "settings@1"
         },
         {
           "command": "prCopilot.refreshIssues",
@@ -299,7 +237,7 @@
       "activitybar": [
         {
           "id": "prCopilot",
-          "title": "PR Copilot",
+          "title": "Pull Requests",
           "icon": "media/pr-copilot.svg"
         }
       ]
@@ -309,11 +247,6 @@
         {
           "id": "prCopilot.pullRequests",
           "name": "Pull Requests"
-        },
-        {
-          "id": "prCopilot.insights",
-          "name": "AI Insights",
-          "type": "webview"
         },
         {
           "id": "prCopilot.issues",
@@ -334,7 +267,7 @@
       ]
     },
     "configuration": {
-      "title": "PR Copilot",
+      "title": "Pull Request Review",
       "properties": {
         "prCopilot.provider": {
           "type": "string",
@@ -354,76 +287,6 @@
           "type": "string",
           "default": "",
           "description": "Optional additional GitHub search qualifiers for filtering pull requests."
-        },
-        "prCopilot.ai.baseUrl": {
-          "type": "string",
-          "default": "https://api.openai.com/v1",
-          "description": "Base URL for the AI provider API."
-        },
-        "prCopilot.ai.enabled": {
-          "type": "boolean",
-          "default": false,
-          "description": "Enable AI insights for pull request bugs and problems and summaries. Generation can take time."
-        },
-        "prCopilot.ai.provider": {
-          "type": "string",
-          "enum": [
-            "openai",
-            "openai-compatible",
-            "gemini",
-            "anthropic",
-            "ollama"
-          ],
-          "default": "openai",
-          "description": "AI provider used for PR summaries and bug detection."
-        },
-        "prCopilot.ai.model": {
-          "type": "string",
-          "default": "gpt-4.1-mini",
-          "description": "Model identifier used for AI review features."
-        },
-        "prCopilot.ai.enableSummary": {
-          "type": "boolean",
-          "default": false,
-          "description": "Generate the AI summary section for the selected PR."
-        },
-        "prCopilot.ai.enableRisks": {
-          "type": "boolean",
-          "default": true,
-          "description": "Generate AI bugs and problems findings for the selected PR."
-        },
-        "prCopilot.ai.maxFilesPerInsight": {
-          "type": "number",
-          "default": 20,
-          "minimum": 1,
-          "description": "Maximum number of changed files included in AI insight prompts."
-        },
-        "prCopilot.ai.maxDiffCharacters": {
-          "type": "number",
-          "default": 48000,
-          "minimum": 2000,
-          "description": "Maximum total diff characters included across all AI insight prompts."
-        },
-        "prCopilot.ai.maxChunkCharacters": {
-          "type": "number",
-          "default": 12000,
-          "minimum": 2000,
-          "description": "Maximum prompt chunk size used when splitting PR diffs for AI insight generation."
-        },
-        "prCopilot.ai.anthropicVersion": {
-          "type": "string",
-          "default": "2023-06-01",
-          "description": "Anthropic API version header used when the Anthropic provider is selected."
-        },
-        "prCopilot.ai.geminiBaseUrl": {
-          "type": "string",
-          "default": "https://generativelanguage.googleapis.com/v1beta",
-          "description": "Base URL for Gemini API requests."
-        },
-        "prCopilot.ai.ollamaBaseUrl": {
-          "type": "string",
-          "default": "http://localhost:11434/v1",
-          "description": "Base URL for local Ollama OpenAI-compatible API requests."
         }
       }
     }
@@ -432,15 +295,15 @@
     "build": "tsc -p ./",
     "watch": "tsc -w -p ./",
     "lint": "eslint src --ext .ts",
-    "package": "vsce package"
+    "package": "node_modules/@vscode/vsce/vsce package"
   },
   "devDependencies": {
     "@types/node": "^22.13.14",
     "@types/vscode": "^1.90.0",
     "@typescript-eslint/eslint-plugin": "^8.26.1",
     "@typescript-eslint/parser": "^8.26.1",
+    "@vscode/vsce": "^3.9.1",
     "eslint": "^9.22.0",
-    "typescript": "^5.8.2",
-    "vsce": "^2.15.0"
+    "typescript": "^5.8.2"
   }
 }

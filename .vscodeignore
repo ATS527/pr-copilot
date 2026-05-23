@@ -1,0 +1,12 @@
+.DS_Store
+.git/**
+.vscode/**
+docs/**
+examples/**
+node_modules/**
+src/**
+tsconfig.json
+eslint.config.js
+media/pr-copilot.svg
+package-lock.json
+*.vsix
