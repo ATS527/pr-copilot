@@ -19,8 +19,10 @@ export interface OpenPrResult {
   repository:
     | {
         provider: "github";
+        host: string;
         owner: string;
         repo: string;
+        apiBaseUrl: string;
       }
     | ({
         provider: "gitlab";
@@ -91,14 +93,14 @@ export async function openPr(dependencies: OpenPrDependencies): Promise<OpenPrRe
 
   let pullRequests: PullRequestSummary[];
   try {
-    pullRequests = await dependencies.githubService.listPullRequests(repository.owner, repository.repo, token, query);
+    pullRequests = await dependencies.githubService.listPullRequests(repository, token, query);
   } catch (error) {
     if (error instanceof GitHubAuthenticationError) {
       token = await dependencies.secretService.ensureGitHubToken({ forcePrompt: true });
       if (!token) {
         throw new Error("GitHub token entry was cancelled.");
       }
-      pullRequests = await dependencies.githubService.listPullRequests(repository.owner, repository.repo, token, query);
+      pullRequests = await dependencies.githubService.listPullRequests(repository, token, query);
     } else {
       throw error;
     }

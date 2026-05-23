@@ -36,7 +36,7 @@ export class GitService {
 
   async checkoutPullRequest(pr: PullRequestDetails): Promise<CheckoutResult> {
     const previousBranch = await this.getCurrentBranch();
-    const localBranch = `pr-copilot/pr-${pr.number}`;
+    const localBranch = `pr-review/pr-${pr.number}`;
     const originUrl = await this.getOriginUrl();
     const fetchSource = this.resolveFetchSource(pr, originUrl);
 

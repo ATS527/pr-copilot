@@ -253,7 +253,7 @@ export class GitLabService {
       token,
       "POST",
       {
-        body: `${body}${commentsBlock}`.trim() || "Review submitted from PR Copilot."
+        body: `${body}${commentsBlock}`.trim() || "Review submitted from Pull Request Review."
       }
     );
 
@@ -269,26 +269,23 @@ export class GitLabService {
 
   static parseRepository(remoteUrl: string): GitLabRepositoryRef | undefined {
     const normalized = remoteUrl.trim().replace(/\.git$/, "");
-    const sshMatch = normalized.match(/^git@(?<host>[^:]+):(?<projectPath>.+)$/);
-    if (sshMatch?.groups) {
+    const sshLikeMatch = normalized.match(/^git@(?<host>[^:]+):(?<projectPath>.+)$/);
+    if (sshLikeMatch?.groups) {
       return {
-        host: sshMatch.groups.host,
-        projectPath: sshMatch.groups.projectPath
+        host: sshLikeMatch.groups.host,
+        projectPath: sshLikeMatch.groups.projectPath
       };
     }
 
-    const httpsMatch = normalized.match(/^https?:\/\/(?<host>[^/]+)\/(?<projectPath>.+)$/);
-    if (httpsMatch?.groups) {
-      if (httpsMatch.groups.host.includes("github.com")) {
-        return undefined;
-      }
+    try {
+      const parsed = new URL(normalized);
       return {
-        host: httpsMatch.groups.host,
-        projectPath: httpsMatch.groups.projectPath
+        host: parsed.host,
+        projectPath: parsed.pathname.replace(/^\/+/, "").replace(/\/+$/, "")
       };
+    } catch {
+      return undefined;
     }
-
-    return undefined;
   }
 
   private async request<T>(

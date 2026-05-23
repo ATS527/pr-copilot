@@ -8,7 +8,7 @@ export function getWorkspaceRoot(): string | undefined {
 export function requireWorkspaceRoot(): string {
   const root = getWorkspaceRoot();
   if (!root) {
-    throw new Error("Open a repository folder before using PR Copilot.");
+    throw new Error("Open a repository folder before using Pull Request Review.");
   }
   return root;
 }
